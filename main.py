@@ -1,4 +1,7 @@
+import hashlib
 import random
+import uuid
+
 from flask import Flask, render_template, request, make_response, redirect, url_for
 from models import User, db
 
@@ -8,10 +11,10 @@ db.create_all()  # create (new) tables in the database
 
 @app.route("/", methods=["GET"])
 def index():
-    email_address = request.cookies.get("email")
+    session_token = request.cookies.get("session_token")
 
-    if email_address:
-        user = db.query(User).filter_by(email=email_address).first()
+    if session_token:
+        user = db.query(User).filter_by(session_token=session_token).first()
     else:
         user = None
 
@@ -22,6 +25,10 @@ def index():
 def login():
     name = request.form.get("user-name")
     email = request.form.get("user-email")
+    password = request.form.get("user-password")
+
+    # hash the password
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
     # create a secret number
     secret_number = random.randint(1, 30)
@@ -31,27 +38,39 @@ def login():
 
     if not user:
         # create a User object
-        user = User(name=name, email=email, secret_number=secret_number)
+        user = User(name=name, email=email, secret_number=secret_number, password=hashed_password)
 
         # save the user object into a database
         db.add(user)
         db.commit()
 
-    # save user's email into a cookie
-    response = make_response(redirect(url_for('index')))
-    response.set_cookie("email", email)
+    # check if password is incorrect
+    if hashed_password != user.password:
+        return "WRONG PASSWORD! Go back and try again."
+    elif hashed_password == user.password:
+        # create a random session token for this user
+        session_token = str(uuid.uuid4())
 
-    return response
+        # save the session token in a database
+        user.session_token = session_token
+        db.add(user)
+        db.commit()
+
+        # save user's session token into a cookie
+        response = make_response(redirect(url_for('index')))
+        response.set_cookie("session_token", session_token)  #  consider adding httponly=True on production
+
+        return response
 
 
 @app.route("/result", methods=["POST"])
 def result():
     guess = int(request.form.get("guess"))
 
-    email_address = request.cookies.get("email")
+    session_token = request.cookies.get("session_token")
 
     # get user from the database based on her/his email address
-    user = db.query(User).filter_by(email=email_address).first()
+    user = db.query(User).filter_by(session_token=session_token).first()
 
     if guess == user.secret_number:
         message = "Correct! The secret number is {0}".format(str(guess))
@@ -74,4 +93,4 @@ def result():
 
 
 if __name__ == '__main__':
-    app.run()  # if you use the port parameter, delete it before deploying to Heroku
+    app.run()
