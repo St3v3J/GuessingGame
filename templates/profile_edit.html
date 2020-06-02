@@ -16,6 +16,20 @@
         <input type="email" value="{{ user.email }}" name="profile-email">
     </p>
 
+    <h4>Password update (optional)</h4>
+    <p>If you'd like to update the password, fill out the input fields below. If not, leave them empty.</p>
+
+    <p>
+        <strong>Old password:</strong>
+        <input type="password" name="old-password">
+    </p>
+
+    <P>
+        <strong>New password:</strong>
+        <input type="password" name="new-password">
+    </P>
+
+
     <button>Submit</button>
 </from>
 {% endblock content %}
