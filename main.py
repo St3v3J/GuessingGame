@@ -9,6 +9,66 @@ app = Flask(__name__)
 db.create_all()  # create (new) tables in the database
 
 
+@app.route("/profile", methods=["GET"])
+def profile():
+    session_token = request.cookies.get("session_token")
+
+    # get user from the database based on her/his email address
+    user = db.query(User).filter_by(session_token=session_token).first()
+
+    if user:
+        return render_template("profile.html", user=user)
+    else:
+        return redirect(url_for("index"))
+
+
+@app.route("/profile/edit", methods=["GET", "POST"])
+def profile_edit():
+    session_token = request.cookies.get("session_token")
+
+    # get user from the database base on her/his email address
+    user = db.query(User).filter_by(session_token=session_token).first()
+
+    if request.method == "GET":
+        if user:  # if user is found
+            return render_template("profile_edit.html", user=user)
+        else:
+            return redirect(url_for("index"))
+    elif request.method == "POST":
+        name = request.form.get("profile-name")
+        email = request.form.get("profile-email")
+
+        # update the user object
+        user.name = name
+        user.email = email
+
+        # store changes into the database
+        db.add(user)
+        db.commit()
+
+        return redirect(url_for("profile"))
+
+
+@app.route("/profile/delete", methods=["GET", "POST"])
+def profile_delete():
+    session_token = request.cookies.get("session_token")
+
+    # get user from the database based on her/his email address
+    user = db.query(User).filter_by(session_token=session_token).first()
+
+    if request.method == "GET":
+        if user:  # if user is found
+            return render_template("profile_delete.html", user=user)
+        else:
+            return redirect(url_for("index"))
+    elif request.method == "POST":
+        # deltete the user in the database
+        db.delete(user)
+        db.commit()
+
+        return redirect(url_for("index"))
+
+
 @app.route("/", methods=["GET"])
 def index():
     session_token = request.cookies.get("session_token")
@@ -90,6 +150,20 @@ def result():
         message = "Your guess is not correct... try something bigger."
 
     return render_template("result.html", message=message)
+
+
+@app.route("/users", methods=["GET"])
+def all_users():
+    users = db.query(User).all()
+
+    return render_template("users.html", users=users)
+
+
+@app.route("/user/<user_id>", methods=["Get"])
+def user_details(user_id):
+    user = db.query(User).get(int(user_id)) # .get() can help you query by the ID
+
+    return render_template("user_details.html", user=user)
 
 
 if __name__ == '__main__':
