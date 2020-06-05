@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}Edit Profile{% endblock title %}
+{% block title %}Edit profile{% endblock title %}
 
 {% block content %}
 <h3>Edit your profile</h3>
 
-<from method="post>">
+<form method="post">
     <p>
         <strong>Your name:</strong>
         <input type="text" value="{{ user.name }}" name="profile-name">
     </p>
 
     <p>
-        <strong>Your email</strong>
+        <strong>Your email:</strong>
         <input type="email" value="{{ user.email }}" name="profile-email">
     </p>
 
@@ -24,12 +24,11 @@
         <input type="password" name="old-password">
     </p>
 
-    <P>
+    <p>
         <strong>New password:</strong>
         <input type="password" name="new-password">
-    </P>
-
+    </p>
 
     <button>Submit</button>
-</from>
-{% endblock content %}
+</form>
+{% endblock content %}A
